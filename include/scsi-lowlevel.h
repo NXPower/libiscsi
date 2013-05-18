@@ -698,24 +698,24 @@ struct scsi_get_lba_status {
 
 struct scsi_op_timeout_descriptor {
 	uint16_t descriptor_length;
-	uint8_t reserved;
 	uint8_t command_specific;
 	uint32_t nominal_processing_timeout;
 	uint32_t recommended_timeout;
 
 };
 struct scsi_command_descriptor {
-	uint8_t op_code;
-	uint8_t reserved1;
-	uint16_t service_action;
-	uint8_t reserved2;
-	uint8_t reserved3;
-	uint16_t cdb_length;
-	struct scsi_op_timeout_descriptor to[0];
+	uint8_t opcode;
+	uint16_t sa;
+	uint8_t ctdp;
+	uint8_t servactv;
+	uint16_t cdb_len;
+
+	/* only present if CTDP==1 */
+	struct scsi_op_timeout_descriptor to;
 };
 
 struct scsi_report_supported_op_codes {
-	uint32_t num_descriptors;
+	int num_descriptors;
 	struct scsi_command_descriptor descriptors[0];
 };
 
