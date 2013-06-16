@@ -118,6 +118,10 @@ iscsi_set_initial_r2t(struct iscsi_context *iscsi, enum iscsi_initial_r2t initia
  * iSCSI URL format :
  * iscsi://[<username>[%<password>]@]<host>[:<port>]/<target-iqn>/<lun>
  *
+ * Target names are url encoded with '%' as a special character.
+ * Example:
+ * "iqn.ronnie.test%3A1234" will be translated to "iqn.ronnie.test:1234"
+ *
  * Function will return a pointer to an iscsi url structure if successful,
  * or it will return NULL and set iscsi_get_error() accrodingly if there was a problem
  * with the URL.
