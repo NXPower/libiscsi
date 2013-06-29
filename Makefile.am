@@ -320,7 +320,7 @@ bin/ld_iscsi.o: src/bin_ld_iscsi-ld_iscsi.o lib/libiscsi_convenience.la
 	$(LIBTOOL) --mode=link $(CC) -o $@ $^
 
 # 3) Manually create the .so file.
-bin_SCRIPTS = bin/ld_iscsi.so
+#bin_SCRIPTS = bin/ld_iscsi.so
 bin/ld_iscsi.so: bin/ld_iscsi.o
 	$(CC) -shared -o bin/ld_iscsi.so bin/ld_iscsi.o -ldl
 endif
