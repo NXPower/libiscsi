@@ -61,7 +61,7 @@ bin_iscsi_dd_SOURCES = examples/iscsi-dd.c
 
 # libiscsi test tool
 
-noinst_PROGRAMS += bin/iscsi-test
+EXTRA_PROGRAMS += bin/iscsi-test
 dist_noinst_HEADERS += test-tool/iscsi-support.h \
 		       test-tool/iscsi-test.h \
 		       test-tool/iscsi-test-cu.h
