@@ -114,6 +114,7 @@ iscsi_create_context(const char *initiator_name)
 	iscsi->tcp_keepidle=30;
 	
 	iscsi->reconnect_max_retries = -1;
+	iscsi->connection_timeout = -1;
 
 	if (getenv("LIBISCSI_DEBUG") != NULL) {
 		iscsi_set_log_level(iscsi, atoi(getenv("LIBISCSI_DEBUG")));
@@ -578,3 +579,7 @@ iscsi_set_initial_r2t(struct iscsi_context *iscsi, enum iscsi_initial_r2t initia
 	return 0;
 }
 
+void
+iscsi_set_connection_timeout(struct iscsi_context *iscsi, size_t timeout) {
+	iscsi->connection_timeout = timeout;
+}

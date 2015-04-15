@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <time.h>
+#include <sys/param.h>
 #include "slist.h"
 #include "iscsi.h"
 #include "iscsi-private.h"
@@ -237,6 +238,7 @@ int iscsi_reconnect(struct iscsi_context *old_iscsi)
 	}
 
 	int retry = 0;
+	time_t reconnect_end_time = time(NULL) + old_iscsi->connection_timeout;
 
 	if (old_iscsi->last_reconnect) {
 		if (time(NULL) - old_iscsi->last_reconnect < 5) sleep(5);
@@ -278,8 +280,11 @@ try_again:
 	iscsi->tcp_syncnt = old_iscsi->tcp_syncnt;
 
 	iscsi->reconnect_max_retries = old_iscsi->reconnect_max_retries;
+	iscsi->connection_timeout = old_iscsi->connection_timeout;
+        
+        time_t timeout = MAX(1, reconnect_end_time - time(NULL));
 
-	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun) != 0) {
+	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun, timeout) != 0) {
 		if (iscsi->reconnect_max_retries != -1 && retry >= iscsi->reconnect_max_retries) {
 			iscsi_defer_reconnect(old_iscsi);
 			iscsi_destroy_context(iscsi);
@@ -292,6 +297,14 @@ try_again:
 		}
 		if (backoff > 30) {
 			backoff=30;
+		}
+		time_t now = time(NULL);
+		if (now  >= reconnect_end_time) {
+			fprintf(stderr, "Failed to reconnect with %d "
+			"retries, committing suicide\n", retry);
+			abort();
+		} else {
+			backoff = MIN(reconnect_end_time - now, backoff);
 		}
 		ISCSI_LOG(old_iscsi, 1, "reconnect try %d failed, waiting %d seconds", retry, backoff);
 		iscsi_destroy_context(iscsi);

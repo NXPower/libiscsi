@@ -33,6 +33,7 @@ struct iscsi_sync_state {
    int finished;
    int status;
    struct scsi_task *task;
+   time_t timeout_seconds;
 };
 
 static void
@@ -40,6 +41,7 @@ event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 {
 	struct pollfd pfd;
 	int ret;
+	time_t end_time = time(NULL) + state->timeout_seconds;
 
 	while (state->finished == 0) {
 		pfd.fd = iscsi_get_fd(iscsi);
@@ -51,6 +53,12 @@ event_loop(struct iscsi_context *iscsi, struct iscsi_sync_state *state)
 			return;
 		}
 		if (ret == 0) {
+			if (state->timeout_seconds != 0 &&
+				time(NULL) >= end_time) {
+				iscsi_set_error(iscsi, "event loop timeout");
+				state->status = -1;
+				return;
+			}
 			/* poll timedout, try again */
 			continue;
 		}
@@ -104,7 +112,8 @@ iscsi_connect_sync(struct iscsi_context *iscsi, const char *portal)
 
 int
 iscsi_full_connect_sync(struct iscsi_context *iscsi,
-			const char *portal, int lun)
+			const char *portal, int lun,
+			size_t timeout_seconds)
 {
 	struct iscsi_sync_state state;
 
@@ -117,7 +126,8 @@ iscsi_full_connect_sync(struct iscsi_context *iscsi,
 				iscsi_get_error(iscsi));
 		return -1;
 	}
-
+       
+	state.timeout_seconds = timeout_seconds;
 	event_loop(iscsi, &state);
 
 	return state.status;

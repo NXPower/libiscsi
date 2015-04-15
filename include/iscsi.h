@@ -360,7 +360,7 @@ EXTERN int iscsi_full_connect_async(struct iscsi_context *iscsi, const char *por
  * <0 if there was an error.
  */
 EXTERN int iscsi_full_connect_sync(struct iscsi_context *iscsi, const char *portal,
-			    int lun);
+			    int lun, size_t timeout);
 
 /*
  * Disconnect a connection to a target.
@@ -1112,6 +1112,9 @@ iscsi_set_bind_interfaces(struct iscsi_context *iscsi, char * interfaces);
 */
 EXTERN void
 iscsi_set_reconnect_max_retries(struct iscsi_context *iscsi, int count);
+
+EXTERN void
+iscsi_set_connection_timeout(struct iscsi_context *iscsi, size_t timeout);
 
 #ifdef __cplusplus
 }

@@ -132,6 +132,7 @@ struct iscsi_context {
 	int frees;
 
 	time_t last_reconnect;	
+	time_t connection_timeout;
 };
 
 #define ISCSI_PDU_IMMEDIATE		       0x40

@@ -99,7 +99,7 @@ int T1041_unsolicited_immediate_data(const char *initiator, const char *url)
 	iscsi_set_header_digest(iscsi, ISCSI_HEADER_DIGEST_NONE_CRC32C);
 	iscsi_set_immediate_data(iscsi, ISCSI_IMMEDIATE_DATA_YES);
 	iscsi_set_initial_r2t(iscsi, ISCSI_INITIAL_R2T_YES);
-	if (iscsi_full_connect_sync(iscsi, iscsi_url->portal, lun) != 0) {
+	if (iscsi_full_connect_sync(iscsi, iscsi_url->portal, lun, 0) != 0) {
 		printf("[FAILED]\n");
 		printf("Failed to log in to target with IMMEDIATE_DATA=YES and INITIAL_R2T=YES %s\n", iscsi_get_error(iscsi));
 		ret = -1;

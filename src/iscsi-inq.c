@@ -301,7 +301,7 @@ int main(int argc, const char *argv[])
 		}
 	}
 
-	if (iscsi_full_connect_sync(iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
+	if (iscsi_full_connect_sync(iscsi, iscsi_url->portal, iscsi_url->lun, 0) != 0) {
 		fprintf(stderr, "Login Failed. %s\n", iscsi_get_error(iscsi));
 		iscsi_destroy_url(iscsi_url);
 		iscsi_destroy_context(iscsi);

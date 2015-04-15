@@ -104,7 +104,7 @@ int open(const char *path, int flags, mode_t mode)
 			}
 		}
 
-		if (iscsi_full_connect_sync(iscsi, iscsi_url->portal, iscsi_url->lun) != 0) {
+		if (iscsi_full_connect_sync(iscsi, iscsi_url->portal, iscsi_url->lun, 0) != 0) {
 			LD_ISCSI_DPRINTF(0,"Login Failed. %s\n", iscsi_get_error(iscsi));
 			iscsi_destroy_url(iscsi_url);
 			iscsi_destroy_context(iscsi);
