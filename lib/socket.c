@@ -207,43 +207,64 @@ iscsi_connect_async(struct iscsi_context *iscsi, const char *portal,
 		*str = 0;
 	}
 
-	/* is it a hostname ? */
-	if (getaddrinfo(host, NULL, NULL, &ai) != 0) {
-		iscsi_free(iscsi, addr);
-		iscsi_set_error(iscsi, "Invalid target:%s  "
-			"Can not resolv into IPv4/v6.", portal);
-		return -1;
- 	}
-	iscsi_free(iscsi, addr);
-
 	memset(&sa, 0, sizeof(sa));
-	switch (ai->ai_family) {
-	case AF_INET:
+	/* Avoid getaddrinfo if the host is an IPv4/IPv6 address.
+	 * On kernels >3.18, getaddrinfo calls seem to hang forever.
+	 * Skipping this when hosts are specified as IPv4 or IPv6 addresses.
+	 * */
+	if (inet_pton(AF_INET, host, (void *)&sa.sin.sin_addr) > 0) {
 		socksize = sizeof(struct sockaddr_in);
-		memcpy(&sa.sin, ai->ai_addr, socksize);
 		sa.sin.sin_port = htons(port);
+		sa.sin.sin_family = AF_INET;
 #ifdef HAVE_SOCK_SIN_LEN
 		sa.sin.sin_len = socksize;
 #endif
-		break;
-	case AF_INET6:
+	} else if (inet_pton(AF_INET6, host, (void *)&sa.sin6.sin6_addr) > 0) {
 		socksize = sizeof(struct sockaddr_in6);
-		memcpy(&sa.sin6, ai->ai_addr, socksize);
 		sa.sin6.sin6_port = htons(port);
+		sa.sin6.sin6_family = AF_INET6;
 #ifdef HAVE_SOCK_SIN_LEN
 		sa.sin6.sin6_len = socksize;
 #endif
-		break;
-	default:
-		iscsi_set_error(iscsi, "Unknown address family :%d. "
-				"Only IPv4/IPv6 supported so far.",
-				ai->ai_family);
-		freeaddrinfo(ai);
-		return -1;
-
+	} else {
+		/* is it a hostname ? */
+		if (getaddrinfo(host, NULL, NULL, &ai) != 0) {
+			iscsi_free(iscsi, addr);
+			iscsi_set_error(iscsi, "Invalid target:%s  "
+				"Can not resolv into IPv4/v6.", portal);
+			return -1;
+		}
+		switch (ai->ai_family) {
+		case AF_INET:
+			socksize = sizeof(struct sockaddr_in);
+			memcpy(&sa.sin, ai->ai_addr, socksize);
+			sa.sin.sin_port = htons(port);
+			sa.sin.sin_family = AF_INET;
+#ifdef HAVE_SOCK_SIN_LEN
+			sa.sin.sin_len = socksize;
+#endif
+			break;
+		case AF_INET6:
+			socksize = sizeof(struct sockaddr_in6);
+			memcpy(&sa.sin6, ai->ai_addr, socksize);
+			sa.sin6.sin6_port = htons(port);
+			sa.sin6.sin6_family = AF_INET6;
+#ifdef HAVE_SOCK_SIN_LEN
+			sa.sin6.sin6_len = socksize;
+#endif
+			break;
+		default:
+			iscsi_set_error(iscsi, "Unknown address family :%d. "
+					"Only IPv4/IPv6 supported so far.",
+					ai->ai_family);
+			freeaddrinfo(ai);
+			return -1;
+		}
 	}
 
-	iscsi->fd = socket(ai->ai_family, SOCK_STREAM, 0);
+	iscsi_free(iscsi, addr);
+
+	iscsi->fd = socket(sa.sa.sa_family, SOCK_STREAM, 0);
 	if (iscsi->fd == -1) {
 		freeaddrinfo(ai);
 		iscsi_set_error(iscsi, "Failed to open iscsi socket. "
