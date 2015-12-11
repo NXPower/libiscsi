@@ -282,7 +282,7 @@ try_again:
 	iscsi->reconnect_max_retries = old_iscsi->reconnect_max_retries;
 	iscsi->connection_timeout = old_iscsi->connection_timeout;
         
-        time_t timeout = MAX(1, reconnect_end_time - time(NULL));
+        time_t timeout = MIN(5, reconnect_end_time - time(NULL));
 
 	if (iscsi_full_connect_sync(iscsi, iscsi->portal, iscsi->lun, timeout) != 0) {
 		if (iscsi->reconnect_max_retries != -1 && retry >= iscsi->reconnect_max_retries) {
