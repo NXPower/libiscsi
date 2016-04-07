@@ -162,13 +162,41 @@ iscsi_process_text_reply(struct iscsi_context *iscsi, struct iscsi_pdu *pdu,
 			target->next = targets;
 			targets = target;
 		} else if (!strncmp((char *)ptr, "TargetAddress=", 14)) {
-			if (targets == NULL || targets->target_address != NULL) {
+			if (targets == NULL) {
 				iscsi_set_error(iscsi, "Invalid discovery "
 						"reply");
 				pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
 					      pdu->private_data);
 				iscsi_free_discovery_addresses(iscsi, targets);
 				return -1;
+			}
+			if (targets->target_address != NULL) {
+				struct iscsi_discovery_address *target;
+
+				target = iscsi_zmalloc(iscsi, sizeof(struct iscsi_discovery_address));
+				if (target == NULL) {
+					iscsi_set_error(iscsi, "Failed to allocate "
+							"data for new discovered "
+							"target");
+					pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+						      pdu->private_data);
+					iscsi_free_discovery_addresses(iscsi, targets);
+					return -1;
+				}
+				target->target_name = iscsi_strdup(iscsi, targets->target_name);
+				if (target->target_name == NULL) {
+					iscsi_set_error(iscsi, "Failed to allocate "
+							"data for new discovered "
+							"target name");
+					pdu->callback(iscsi, SCSI_STATUS_ERROR, NULL,
+						      pdu->private_data);
+					iscsi_free(iscsi, target);
+					target = NULL;
+					iscsi_free_discovery_addresses(iscsi, targets);
+					return -1;
+				}
+				target->next = targets;
+				targets = target;
 			}
 			targets->target_address = iscsi_strdup(iscsi, (char *)ptr+14);
 			if (targets->target_address == NULL) {
