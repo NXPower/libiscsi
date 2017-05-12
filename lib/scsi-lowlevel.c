@@ -1874,15 +1874,14 @@ scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persis
 	int xferlen;
 
 	task = malloc(sizeof(struct scsi_task));
-	if (task == NULL) {
-		return NULL;
-	}
+	if (task == NULL)
+		goto err;
+
+	memset(task, 0, sizeof(struct scsi_task));
 
 	iov = scsi_malloc(task, sizeof(struct scsi_iovec));
-	if (iov == NULL) {
-		free(task);
-		return NULL;
-	}
+	if (iov == NULL)
+		goto err;
 
 	switch(sa) {
 	case SCSI_PERSISTENT_RESERVE_REGISTER:
@@ -1896,11 +1895,8 @@ scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persis
 
 		xferlen = 24;
 		buf = scsi_malloc(task, xferlen);
-		if (buf == NULL) {
-			free(task);
-			free(iov);
-			return NULL;
-		}
+		if (buf == NULL)
+			goto err;
 		
 		memset(buf, 0, xferlen);
 		scsi_set_uint64(&buf[0], basic->reservation_key);
@@ -1917,19 +1913,12 @@ scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persis
 		break;
 	case SCSI_PERSISTENT_RESERVE_REGISTER_AND_MOVE:
 		/* XXX FIXME */
-		free(task);
-		free(iov);
-		return NULL;
+		goto err;
 	default:
-		free(task);
-		free(iov);
-		return NULL;
+		goto err;
 	}
 
-
-	memset(task, 0, sizeof(struct scsi_task));
-	task->cdb[0]   = SCSI_OPCODE_PERSISTENT_RESERVE_OUT;
-
+	task->cdb[0] = SCSI_OPCODE_PERSISTENT_RESERVE_OUT;
 	task->cdb[1] |= sa & 0x1f;
 	task->cdb[2] = ((scope << 4) & 0xf0) | (type & 0x0f);
 	
@@ -1944,6 +1933,10 @@ scsi_cdb_persistent_reserve_out(enum scsi_persistent_out_sa sa, enum scsi_persis
 	scsi_task_set_iov_out(task, iov, 1);
 
 	return task;
+
+err:
+	scsi_free_scsi_task(task);
+	return NULL;
 }
 
 /*
